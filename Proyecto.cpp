@@ -9,7 +9,7 @@ using namespace std;
 
 
 int menu_archivo(){
-	
+	printf("prueba 2");
 	char op ;
 	printf("prueba");
 	while (true){
