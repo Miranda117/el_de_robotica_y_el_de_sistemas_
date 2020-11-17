@@ -10,7 +10,7 @@ using namespace std;
 
 int menu_archivo(){
 	char op ;
-
+	printf("prueba");
 	while (true){
 		printf("\n**********************************\n");
 		printf("********* MENU ARDIVOS *********\n");
