@@ -1,41 +1,365 @@
+//							Proyecto final
+//							Elaborado por:
+//Angel Nolasco Serrano A01365726|| Anatanael Jesús Miranda Faustino
+
+//ESTRUCTURA DE ARCHIVO DE PRODUCTOS		"productos.txt"
+//--------------------------------------------------------------------------------------
+//clave			int 5		1-99999			clave del producto			        clave
+//nombre		char 20						nombre de producto			        nom
+//familia		char 20						familia: frutas,verduras,etc        fam
+//medida		char 20						Unidad de medida: litros,etc        medida
+//precio		int 6		1-999999		precio unitario				        precio
+//existencia_i 	int 6		1-999999		existencia de registro inicial      ex_i
+//existencia_a  int 6		1-999999		existencia de registro actual       ex_a
+//stock mínimo 	int 6		1-999999		unidades requeridas en el almacen   min
+//stock máximo  int 6		1-999999		unidades permitidas en el almacen   max
+
+
+//ARCHIVO DE MOVIMIENTOS		"movimientos.txt"
+//---------------------------------------------------------------------------------------
+//clave			int 5		1-99999							clave del producto involucrado			clave_m
+//fecha			char 10		dd/mm/aaaa						fecha de movimiento			            fecha
+//cantidad		int 6		1-999999						unidades involucradas			        cantidad
+//Tipo de mov	char 1		S Salida E Entrada				Tipo de movimiento			            tipo_mov
+//Sub-tipo mov	char 1		C,D(entrada) || V,P,M(salida)	clasificación de mov			        sub_mov
+
+//C=Compra
+//D=Devolución del cliente
+//V=Venta del producto
+//P=Devolución al proovedor
+//M=Merma
+
+
 #include <iostream>
+#include <stdio.h>
 #include <conio.h>
-# include <String.h>
-# include <fstream>
-# include <time.h>
-# include <stdio.h>
+#include <time.h>
+#include <String.h>
+#include <fstream>
+
 using namespace std;
 
+char falso[2];
+//Variables productos
+int clave, precio, ex_i, ex_a, minP, maxP;
+char nom[21], fam[21], medida[21];
+//Variables movimientos
+int clave_m,cantidad;
+char fecha[11], tipo_mov, sub_mov;
 
+struct NodoProductos{
+	int clave, precio, ex_i, ex_a, minP, maxP;
+	char nom[21], fam[21], medida[21];
+	NodoProductos *next, *prev;
+};
+NodoProductos *nuevop, *actualp, *primerop, *ultimop;
+
+struct NodoMovimientos{
+	int clave_m,cantidad;
+	char fecha[11], tipo_mov, sub_mov;
+	NodoMovimientos *next, *prev;
+};
+NodoMovimientos *nuevom, *actualm, *primerom, *ultimom;
+
+char *obtiene_fecha(){
+	time_t tiempo;
+	struct tm *tm;
+	char fechayhora[11];
+	
+	tiempo=time(NULL);
+	tm=localtime(&tiempo);
+	strftime(fechayhora, 11, "&d/%m/%Y",tm);
+	return(fechayhora);
+}
+
+void pausa(){
+	printf("\n[[ENTER]] para continuar\n"); getche();
+}
+
+void inserta_fin(){
+	if (primerop==NULL){
+		primerop=nuevop;
+		ultimop=nuevop;
+	}
+	else{
+		ultimop->next=nuevop;
+		nuevop->next=ultimop;
+		ultimop=nuevop;
+	}
+	
+}
+
+void carga_archivos(){
+	//Arch productos
+	ifstream archp;
+	archp.open("productos.txt",ios::in);
+	while(!archp.eof()){
+		archp >>clave >>nom >>fam >>medida >>precio >>ex_i >>ex_a >>minP >>maxP;
+		if(!archp.eof()){
+			nuevop=new NodoProductos;
+			nuevop->clave=clave;
+			strcpy(nuevop->nom,nom);
+			strcpy(nuevop->fam,fam);
+			strcpy(nuevop->medida,medida);
+			nuevop->precio=precio;
+			nuevop->ex_i=ex_i;
+			nuevop->ex_a=ex_a;
+			nuevop->minP=minP;
+			nuevop->maxP=maxP;
+			nuevop->next=NULL;
+			if(primerop==NULL){
+				primerop=nuevop;
+				ultimop=nuevop;
+			}else{
+				ultimop->next=nuevop;
+				ultimop=nuevop;
+			}
+		}
+	}
+	archp.close();
+	
+	//Archivo de movimientos
+	ifstream archm;
+	archm.open("movimientos.txt",ios::in);
+	while(!archm.eof()){
+		archm >>clave_m >>fecha >>cantidad >>tipo_mov >>sub_mov;
+		if(!archm.eof()){
+			nuevom=new NodoMovimientos;
+			nuevom->clave_m=clave_m;
+			strcpy(nuevom->fecha,fecha);
+			nuevom->cantidad=cantidad;
+			nuevom->tipo_mov=tipo_mov;
+			nuevom->sub_mov=sub_mov;
+			//strcpy(nuevom->cel,cel);
+			//strcpy(nuevom->cor,cor);
+			//nuevom->saldo_inicial=saldo_inicial;
+			//nuevom->saldo_actual=saldo_actual;
+			//nuevom->next=NULL;
+			if(primerom==NULL){
+				primerom=nuevom;
+				ultimom=nuevom;
+			}else{
+				ultimom->next=nuevom;//nuevop
+				ultimom=nuevom;
+			}
+		}		
+	}
+	archm.close();
+}
+
+void descarga_productos(){
+	actualp=primerop;
+	ofstream archp;
+	archp.open("productos.txt",ios::out);
+	while(actualp!=NULL){
+		for (int i=0;i<strlen(actualp->nom);i++) if (actualp->nom[i]==' ') actualp->nom[i]='_';
+		for (int i=0;i<strlen(actualp->fam);i++) if (actualp->fam[i]==' ') actualp->fam[i]='_';
+		for (int i=0;i<strlen(actualp->medida);i++) if (actualp->medida[i]==' ') actualp->medida[i]='_';
+		archp <<actualp->clave <<" " <<actualp->nom <<" " <<actualp->fam <<" " <<actualp->medida <<" " <<actualp->precio <<" " <<actualp->ex_i <<" " <<actualp->ex_a <<" " <<actualp->minP <<" " <<actualp->maxP <<"\n";
+		actualp=actualp->next;
+	}
+	archp.close();
+}
+
+void descarga_movimientos(){
+	actualm=primerom;
+	ofstream archm;
+	archm.open("movimientos.txt",ios::out);
+	while(actualm!=NULL){
+		for(int i=0;i<strlen(actualm->fecha);i++) if(actualm->fecha[i]==' ') actualm->fecha[i]=='_';
+		archm <<actualm->clave_m <<" " <<actualm->fecha <<" " <<actualm->tipo_mov <<" " <<actualm->sub_mov <<"\n";
+		actualm=actualm->next;
+	}
+	archm.close();
+}
+
+bool busca_clave(){
+	printf("Indica la clave del producto: "); scanf("%d",&clave); gets(falso);
+	bool existe_clave=false;
+		
+	actualp=primerop;
+	while(actualp!=NULL){
+		if(actualp->clave==clave){
+			return (true);
+		}
+		actualp=actualp->next;
+	}
+	return(false);
+}
+
+void consulta_fam(){
+	bool existe_fam=false;
+	printf("Indica la familia de productos a consultar: "); gets(falso); gets(fam);
+	actualp=primerop;
+	printf(fam);
+	while(actualp!=NULL){
+		if(strcmp(actualp->fam,fam)==0){
+			existe_fam=true;
+			break;
+		}
+		actualp=actualp->next;
+	}
+	if(!existe_fam){
+		printf("Error, familia de productos inexistente en la base de datos");
+		pausa();
+	}else{
+		while(actualp!=NULL){
+			if(strcmp(actualp->fam,fam)==0){
+				for(int i=0;i<strlen(actualp->nom);i++) if(actualp->nom[i]=='_') actualp->nom[i]==' ';
+				for(int i=0;i<strlen(actualp->fam);i++) if(actualp->fam[i]=='_') actualp->fam[i]==' ';
+				for(int i=0;i<strlen(actualp->medida);i++) if(actualp->medida[i]=='_') actualp->medida[i]==' ';
+					
+				printf("\n");
+				printf("\nClave: %d",actualp->clave);
+				printf("\nNombre: %s",actualp->nom);
+				printf("\nUnidad de medida: %s",actualp->medida);
+				printf("\nPrecio: %d",actualp->precio);
+				printf("\nExistencia inicial: %d",actualp->ex_i);
+				printf("\nExistencia actual: %d",actualp->ex_a);
+				printf("\nUnidades requeridas: %d",actualp->minP);
+				printf("\nUnidades permitidas: %d",actualp->maxP);
+				printf("\n-----------------------------------------\n");
+				
+				actualp=actualp->next;
+			}
+		}	
+	}
+}	
+
+void alta_productos(){
+	int l;
+	if (busca_clave()){
+		printf("Error, clave se duplica en la base de datos...\n");
+		pausa();
+	}else{
+		do{
+			printf("\nIndica el nombre del produco: "); gets(nom);
+			l=strlen(nom);
+			if((l<1) || (l>20)){
+				printf("Error, cadena entre 1 y 20 caracteres...\n");
+				pausa();
+			}
+		}while((l<1) || (l>20));
+		do{
+			printf("\nIndica la familia del producto: "); gets(fam);
+			l=strlen(fam);
+			if((l<1) || (l>20)){
+				printf("Error, cadena entre 1 y 20 caracteres...\n");
+				pausa();
+			}
+		}while((l<1) || (l>20));
+		do{
+			printf("\nIndica la unidad de medida del producto: "); gets(medida);
+			l=strlen(medida);
+			if((l<1) || (l>20)){
+				printf("Error, cadena entre 1 y 15 caracteres...\n");
+				pausa();
+			}
+		}while((l<1) || (l>15));
+		do{
+			printf("\nIndica el precio unitario del producto: "); scanf("%d",&precio); gets(falso);
+			if((precio<1) || (precio>999999)){
+				printf("Error, el precio sobrepasa el limite...\n");
+				pausa();
+			}
+		}while((precio<1) || (precio>999999));
+		do{
+			printf("\nIndica la existencia inicial del producto: "); scanf("%d",&ex_i); gets(falso);
+			if((ex_i<1) || (ex_i>999999)){
+				printf("Error, la existencia sobrepasa el limite...\n");
+				pausa();
+			}
+		}while((ex_i<1) || (ex_i>999999));
+		do{
+			printf("\nIndica el stock minimo del producto: "); scanf("%d",&minP); gets(falso);
+			if((minP<1) || (minP>999999)){
+				printf("Error, la existencia sobrepasa el limite...\n");
+				pausa();
+			}
+		}while((minP<1) || (minP>999999));
+		do{
+			printf("\nIndica el stock maximo del producto: "); scanf("%d",&maxP); gets(falso);
+			if((maxP<1) || (maxP>999999)){
+				printf("Error, el stock sobrepasa el limite...\n");
+				pausa();
+			}
+		}while((maxP<1) || (maxP>999999));
+		
+		for(int i=0;i<strlen(nom);i++) if(nom[i]==' ') nom[i]=='_';
+		for(int i=0;i<strlen(fam);i++) if(fam[i]==' ') fam[i]=='_';
+		for(int i=0;i<strlen(medida);i++) if(medida[i]==' ') medida[i]=='_';
+		
+		nuevop=new NodoProductos;
+		nuevop->clave=clave;
+		strcpy(nuevop->nom,nom);
+		strcpy(nuevop->fam,fam);
+		strcpy(nuevop->medida,medida);
+		nuevop->precio=precio;
+		nuevop->ex_i=ex_i;
+		nuevop->ex_a=ex_i;
+		nuevop->minP=minP;
+		nuevop->maxP=maxP;
+		nuevop->next=NULL;
+		if(primerop==NULL){
+			primerop=nuevop;
+			ultimop=nuevop;
+		}else{
+			ultimop->next=nuevop;
+			ultimop=nuevop;
+		}
+	descarga_productos();
+	carga_archivos();
+	}
+}
+
+void consulta_clave(){
+	if(!busca_clave()){
+		printf("Error, clave inexistente en la base de datos...\n");
+		pausa();
+	}
+	else{
+		for(int i=0;i<strlen(actualp->nom);i++) if(actualp->nom[i]=='_') actualp->nom[i]==' ';
+		for(int i=0;i<strlen(actualp->fam);i++) if(actualp->fam[i]=='_') actualp->fam[i]==' ';
+		for(int i=0;i<strlen(actualp->medida);i++) if(actualp->medida[i]=='_') actualp->medida[i]==' ';
+		
+		printf("\nNombre: %s",actualp->nom);
+		printf("\nFamilia del producto: %s",actualp->fam);
+		printf("\nUnidad de medida: %s",actualp->medida);
+		printf("\nPrecio: %d",actualp->precio);
+		printf("\nExistencia inicial: %d",actualp->ex_i);
+		printf("\nExistencia actual: %d",actualp->ex_a);
+		printf("\nUnidades requeridas: %d",actualp->minP);
+		printf("\nUnidades permitidas: %d",actualp->maxP);
+	}
+}	
+	
 
 int menu_archivo(){
-
-
 	char op ;
 
 	while (true){
 		printf("\n**********************************\n");
-		printf("********* MENU ARDIVOS *********\n");
+		printf("********* MENU ARCHIVOS *********\n");
 		printf("**********************************\n");
 		printf("a) Alta nuevos productos \n");
 		printf("b) Baja productos obsoletos \n");
 		printf("c) Consulta productos por clave\n");
-		printf("d) Consulta productos pro familia \n");
+		printf("d) Consulta productos por familia \n");
 		printf("x) Terminar\n");
 		cout<< "ingrese la opcion: ";cin>>op;
 
         switch (op){
 		case 'a' :
-		    cout<<"A\n";
+		    alta_productos();
 		    break;
         case 'b' :
    		    cout<<"b\n";
            break;
         case 'c' :
-   		    cout<<"c\n";
+   		    consulta_clave();
            break;
         case 'd' :
-   		    cout<<"d\n";
+   		    consulta_fam();
            break;
         case 'x':
             return 0;
@@ -151,11 +475,14 @@ int menu(){
         }
 	}
 }
+
 int main(){
-menu();
-
-
-
-
-
+	ofstream archp;
+	archp.open("productos.txt",ios::app);
+	archp.close();
+	ofstream archm;
+	archm.open("movimientos.txt",ios::app);
+	archm.close();
+	carga_archivos();
+	menu();
 }
