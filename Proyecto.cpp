@@ -65,10 +65,10 @@ char *obtiene_fecha(){
 	time_t tiempo;
 	struct tm *tm;
 	char fechayhora[11];
-	
+
 	tiempo=time(NULL);
 	tm=localtime(&tiempo);
-	strftime(fechayhora, 11, "&d/%m/%Y",tm);
+	strftime(fechayhora, 11, "%d/%m/%Y",tm);
 	return(fechayhora);
 }
 
@@ -86,7 +86,7 @@ void inserta_fin(){
 		nuevop->next=ultimop;
 		ultimop=nuevop;
 	}
-	
+
 }
 
 void carga_archivos(){
@@ -112,12 +112,13 @@ void carga_archivos(){
 				ultimop=nuevop;
 			}else{
 				ultimop->next=nuevop;
+				nuevop->prev=ultimop;
 				ultimop=nuevop;
 			}
 		}
 	}
 	archp.close();
-	
+
 	//Archivo de movimientos
 	ifstream archm;
 	archm.open("movimientos.txt",ios::in);
@@ -140,9 +141,11 @@ void carga_archivos(){
 				ultimom=nuevom;
 			}else{
 				ultimom->next=nuevom;//nuevop
+				nuevom->prev=ultimom;
 				ultimom=nuevom;
+
 			}
-		}		
+		}
 	}
 	archm.close();
 }
@@ -167,7 +170,7 @@ void descarga_movimientos(){
 	archm.open("movimientos.txt",ios::out);
 	while(actualm!=NULL){
 		for(int i=0;i<strlen(actualm->fecha);i++) if(actualm->fecha[i]==' ') actualm->fecha[i]=='_';
-		archm <<actualm->clave_m <<" " <<actualm->fecha <<" " <<actualm->tipo_mov <<" " <<actualm->sub_mov <<"\n";
+		archm <<actualm->clave_m <<" " <<actualm->fecha <<" " <<actualm->cantidad<<" "<<actualm->tipo_mov <<" " <<actualm->sub_mov <<"\n";
 		actualm=actualm->next;
 	}
 	archm.close();
@@ -176,7 +179,7 @@ void descarga_movimientos(){
 bool busca_clave(){
 	printf("Indica la clave del producto: "); scanf("%d",&clave); gets(falso);
 	bool existe_clave=false;
-		
+
 	actualp=primerop;
 	while(actualp!=NULL){
 		if(actualp->clave==clave){
@@ -208,7 +211,7 @@ void consulta_fam(){
 				for(int i=0;i<strlen(actualp->nom);i++) if(actualp->nom[i]=='_') actualp->nom[i]==' ';
 				for(int i=0;i<strlen(actualp->fam);i++) if(actualp->fam[i]=='_') actualp->fam[i]==' ';
 				for(int i=0;i<strlen(actualp->medida);i++) if(actualp->medida[i]=='_') actualp->medida[i]==' ';
-					
+
 				printf("\n");
 				printf("\nClave: %d",actualp->clave);
 				printf("\nNombre: %s",actualp->nom);
@@ -219,12 +222,12 @@ void consulta_fam(){
 				printf("\nUnidades requeridas: %d",actualp->minP);
 				printf("\nUnidades permitidas: %d",actualp->maxP);
 				printf("\n-----------------------------------------\n");
-				
+
 				actualp=actualp->next;
 			}
-		}	
+		}
 	}
-}	
+}
 
 void alta_productos(){
 	int l;
@@ -284,11 +287,11 @@ void alta_productos(){
 				pausa();
 			}
 		}while((maxP<1) || (maxP>999999));
-		
+
 		for(int i=0;i<strlen(nom);i++) if(nom[i]==' ') nom[i]=='_';
 		for(int i=0;i<strlen(fam);i++) if(fam[i]==' ') fam[i]=='_';
 		for(int i=0;i<strlen(medida);i++) if(medida[i]==' ') medida[i]=='_';
-		
+
 		nuevop=new NodoProductos;
 		nuevop->clave=clave;
 		strcpy(nuevop->nom,nom);
@@ -307,7 +310,6 @@ void alta_productos(){
 			ultimop->next=nuevop;
 			ultimop=nuevop;
 		}
-	descarga_productos();
 	carga_archivos();
 	}
 }
@@ -321,7 +323,7 @@ void consulta_clave(){
 		for(int i=0;i<strlen(actualp->nom);i++) if(actualp->nom[i]=='_') actualp->nom[i]==' ';
 		for(int i=0;i<strlen(actualp->fam);i++) if(actualp->fam[i]=='_') actualp->fam[i]==' ';
 		for(int i=0;i<strlen(actualp->medida);i++) if(actualp->medida[i]=='_') actualp->medida[i]==' ';
-		
+
 		printf("\nNombre: %s",actualp->nom);
 		printf("\nFamilia del producto: %s",actualp->fam);
 		printf("\nUnidad de medida: %s",actualp->medida);
@@ -331,8 +333,178 @@ void consulta_clave(){
 		printf("\nUnidades requeridas: %d",actualp->minP);
 		printf("\nUnidades permitidas: %d",actualp->maxP);
 	}
-}	
-	
+}
+
+void entradas_por_compras(){
+if (!busca_clave()){
+		printf("Error, clave no existe en la base de datos...\n");
+		pausa();
+}
+else {
+    strcpy(fecha,obtiene_fecha());
+    tipo_mov='E';
+    sub_mov='C';
+    printf("Seleccione la cantidad que va a comprar: ");scanf("%d", &cantidad);gets(falso);
+    actualp->ex_a=actualp->ex_a+cantidad;
+    nuevom =new NodoMovimientos;
+    nuevom -> cantidad = cantidad;
+    nuevom->clave_m=clave;
+    nuevom->tipo_mov=tipo_mov;
+    nuevom->sub_mov=sub_mov;
+    strcpy(nuevom->fecha,fecha);
+    nuevom->next=NULL ;
+    nuevom->prev=NULL;
+    if (primerom==NULL){
+        primerom=nuevom;
+        ultimom=nuevom;
+        }
+    else{
+        ultimom->next=nuevom;
+        nuevom->prev=ultimom;
+        ultimom=nuevom;
+    }
+    descarga_movimientos();
+    descarga_productos();
+
+}
+}
+
+
+void entradas_por_devolci(){
+if (!busca_clave()){
+		printf("Error, clave no existe en la base de datos...\n");
+		pausa();
+}
+else {
+    strcpy(fecha,obtiene_fecha());
+    tipo_mov='E';
+    sub_mov='D';
+    printf("Seleccione la cantidad que fue devulta comprador: ");scanf("%d", &cantidad);gets(falso);
+    actualp->ex_a=actualp->ex_a+cantidad;
+    nuevom =new NodoMovimientos;
+    nuevom->clave_m=clave;
+    nuevom -> cantidad = cantidad;
+    nuevom->tipo_mov=tipo_mov;
+    nuevom->sub_mov=sub_mov;
+    strcpy(nuevom->fecha,fecha);
+    nuevom->next=NULL ;
+    nuevom->prev=NULL;
+    if (primerom==NULL){
+        primerom=nuevom;
+        ultimom=nuevom;
+        }
+    else{
+        ultimom->next=nuevom;
+        nuevom->prev=ultimom;
+        ultimom=nuevom;
+    }
+    descarga_movimientos();
+    descarga_productos();
+
+}
+}
+
+void salidas_por_ventas(){
+if (!busca_clave()){
+		printf("Error, clave no existe en la base de datos...\n");
+		pausa();
+}
+else {
+    strcpy(fecha,obtiene_fecha());
+    tipo_mov='S';
+    sub_mov='V';
+    printf("Seleccione la cantidad que fue comprada por el cliente: ");scanf("%d", &cantidad);gets(falso);
+    actualp->ex_a=actualp->ex_a-cantidad;
+    nuevom = new NodoMovimientos;
+    nuevom->clave_m=clave;
+    nuevom -> cantidad = cantidad;
+    nuevom->tipo_mov=tipo_mov;
+    nuevom->sub_mov=sub_mov;
+    strcpy(nuevom->fecha,fecha);
+    nuevom->next=NULL ;
+    nuevom->prev=NULL;
+    if (primerom==NULL){
+        primerom=nuevom;
+        ultimom=nuevom;
+        }
+    else{
+        ultimom->next=nuevom;
+        nuevom->prev=ultimom;
+        ultimom=nuevom;
+    }
+    descarga_movimientos();
+    descarga_productos();
+
+}
+}
+
+void salida_por_devo_prove(){
+if (!busca_clave()){
+		printf("Error, clave no existe en la base de datos...\n");
+		pausa();
+}
+else {
+    strcpy(fecha,obtiene_fecha());
+    tipo_mov='S';
+    sub_mov='P';
+    printf("Seleccione la cantidad que fue devuenta al proveedor: ");scanf("%d", &cantidad);gets(falso);
+    actualp->ex_a=actualp->ex_a-cantidad;
+    nuevom = new NodoMovimientos;
+    nuevom->clave_m=clave;
+    nuevom->tipo_mov=tipo_mov;
+    nuevom -> cantidad = cantidad;
+    nuevom->sub_mov=sub_mov;
+    strcpy(nuevom->fecha,fecha);
+    nuevom->next=NULL ;
+    nuevom->prev=NULL;
+    if (primerom==NULL){
+        primerom=nuevom;
+        ultimom=nuevom;
+        }
+    else{
+        ultimom->next=nuevom;
+        nuevom->prev=ultimom;
+        ultimom=nuevom;
+    }
+    descarga_movimientos();
+    descarga_productos();
+
+}
+}
+
+void salidas_por_devo_merma(){
+if (!busca_clave()){
+		printf("Error, clave no existe en la base de datos...\n");
+		pausa();
+}
+else {
+    strcpy(fecha,obtiene_fecha());
+    tipo_mov='S';
+    sub_mov='M';
+    printf("Seleccione la cantidad de merma: ");scanf("%d", &cantidad);gets(falso);
+    actualp->ex_a=actualp->ex_a-cantidad;
+    nuevom = new NodoMovimientos;
+    nuevom->clave_m=clave;
+    nuevom->tipo_mov=tipo_mov;
+    nuevom -> cantidad = cantidad;
+    nuevom->sub_mov=sub_mov;
+    strcpy(nuevom->fecha,fecha);
+    nuevom->next=NULL ;
+    nuevom->prev=NULL;
+    if (primerom==NULL){
+        primerom=nuevom;
+        ultimom=nuevom;
+        }
+    else{
+        ultimom->next=nuevom;
+        nuevom->prev=ultimom;
+        ultimom=nuevom;
+    }
+    descarga_movimientos();
+    descarga_productos();
+
+}
+}
 
 int menu_archivo(){
 	char op ;
@@ -372,7 +544,7 @@ int menu_ent_sal(){
 
 	while (true){
 		printf("\n***************************************\n");
-		printf("** Menu Entradas/salidas de productos**\n");
+		printf("*** MENU ENTRADAS/SALIDAS DE PRODUCTOS***\n");
 		printf("**********************************\n");
 		printf("a) Entradas por compras\n");
 		printf("b) Entradas por devolucion de clientes\n");
@@ -384,19 +556,19 @@ int menu_ent_sal(){
 
         switch (op){
 		case 'a' :
-		    cout<<"A\n";
+		    entradas_por_compras();
 		    break;
         case 'b' :
-   		    cout<<"b\n";
+   		    entradas_por_devolci();
            break;
         case 'c' :
-   		    cout<<"c\n";
+   		    salidas_por_ventas();
            break;
         case 'd' :
-   		    cout<<"d\n";
+   		    salida_por_devo_prove();
            break;
        case 'e' :
-   		    cout<<"e\n";
+   		    salidas_por_devo_merma();
            break;
         case 'x':
             return 0;
@@ -409,7 +581,7 @@ int menu_reportesl(){
 
 	while (true){
 		printf("\n***************************************\n");
-		printf("** Menu de reportes**\n");
+		printf("************** MENU DE REPORTES ********\n");
 		printf("**********************************\n");
 		printf("a) General de productos ordenado por clave\n");
 		printf("b) General de productos ordenado por nombre\n");
@@ -477,12 +649,13 @@ int menu(){
 }
 
 int main(){
-	ofstream archp;
+    ofstream archp;
 	archp.open("productos.txt",ios::app);
 	archp.close();
 	ofstream archm;
 	archm.open("movimientos.txt",ios::app);
 	archm.close();
 	carga_archivos();
+
 	menu();
 }

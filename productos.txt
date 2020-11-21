@@ -1,0 +1,4 @@
+1111 manzana frutas Kg 10 5 10 3 10
+1112 pera frutas Kg 12 8 8 3 15
+1113 oRLO VERDURAS g 7 3 43 9 19
+132 pepas papas lt 3 4 7 1 100
