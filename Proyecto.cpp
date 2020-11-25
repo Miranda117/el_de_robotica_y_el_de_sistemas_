@@ -11,8 +11,8 @@
 //precio		int 6		1-999999		precio unitario				        precio
 //existencia_i 	int 6		1-999999		existencia de registro inicial      ex_i
 //existencia_a  int 6		1-999999		existencia de registro actual       ex_a
-//stock mínimo 	int 6		1-999999		unidades requeridas en el almacen   min
-//stock máximo  int 6		1-999999		unidades permitidas en el almacen   max
+//stock mínimo 	int 6		1-999999		unidades requeridas en el almacen   minP
+//stock máximo  int 6		1-999999		unidades permitidas en el almacen   maxP
 
 
 //ARCHIVO DE MOVIMIENTOS		"movimientos.txt"
@@ -61,6 +61,7 @@ struct NodoMovimientos{
 };
 NodoMovimientos *nuevom, *actualm, *primerom, *ultimom;
 
+//USO GENERAL
 char *obtiene_fecha(){
 	time_t tiempo;
 	struct tm *tm;
@@ -71,11 +72,9 @@ char *obtiene_fecha(){
 	strftime(fechayhora, 11, "%d/%m/%Y",tm);
 	return(fechayhora);
 }
-
 void pausa(){
 	printf("\n[[ENTER]] para continuar\n"); getche();
 }
-
 void inserta_fin(){
 	if (primerop==NULL){
 		primerop=nuevop;
@@ -88,7 +87,6 @@ void inserta_fin(){
 	}
 
 }
-
 void carga_archivos(){
 	//Arch productos
 	ifstream archp;
@@ -149,7 +147,6 @@ void carga_archivos(){
 	}
 	archm.close();
 }
-
 void descarga_productos(){
 	actualp=primerop;
 	ofstream archp;
@@ -163,19 +160,17 @@ void descarga_productos(){
 	}
 	archp.close();
 }
-
 void descarga_movimientos(){
 	actualm=primerom;
 	ofstream archm;
 	archm.open("movimientos.txt",ios::out);
 	while(actualm!=NULL){
-		for(int i=0;i<strlen(actualm->fecha);i++) if(actualm->fecha[i]==' ') actualm->fecha[i]=='_';
+		//for(int i=0;i<strlen(actualm->fecha);i++) if(actualm->fecha[i]==' ') actualm->fecha[i]=='_';
 		archm <<actualm->clave_m <<" " <<actualm->fecha <<" " <<actualm->cantidad<<" "<<actualm->tipo_mov <<" " <<actualm->sub_mov <<"\n";
 		actualm=actualm->next;
 	}
 	archm.close();
 }
-
 bool busca_clave(){
 	printf("Indica la clave del producto: "); scanf("%d",&clave); gets(falso);
 	bool existe_clave=false;
@@ -188,6 +183,131 @@ bool busca_clave(){
 		actualp=actualp->next;
 	}
 	return(false);
+}
+
+//MENU 1
+void elimina_fin(){
+	if (primerop==NULL){
+		printf("Error, la base de datos est%c vac%ca ...\n",160,161);
+		pausa();
+	}
+	else{
+		if (primerop==ultimop){
+			primerop=NULL;
+			ultimop=NULL;
+		}
+		else{
+			actualp=ultimop;
+			ultimop=actualp->prev;
+			ultimop->next=NULL;
+			delete(actualp);
+		}
+	}
+}
+
+void elimina_inicio(){
+	if (primerop==NULL){
+		printf("\nNo hay productos a eliminar...\n");
+		pausa();
+	}
+	else{
+		if (primerop==ultimop){
+			primerop=NULL;
+			ultimop=NULL;
+		}
+		else{
+			actualp=primerop;
+			primerop=primerop->next;
+			primerop->prev=NULL;
+			delete(actualp);
+		}
+	}
+}
+
+void registro_fin(){
+	if (primerom==NULL){
+		printf("Error, la base de datos est%c vac%ca ...\n",160,161);
+		pausa();
+	}
+	else{
+		if (primerom==ultimom){
+			primerom=NULL;
+			ultimom=NULL;
+		}
+		else{
+			actualm=ultimom;
+			ultimom=actualm->prev;
+			ultimom->next=NULL;
+			delete(actualm);
+		}
+	}
+}
+
+void registro_inicio(){
+	if (primerom==NULL){
+		printf("\nNo hay movimientos a eliminar...\n");
+		pausa();
+	}
+	else{
+		if (primerom==ultimom){
+			primerom=NULL;
+			ultimom=NULL;
+		}
+		else{
+			actualm=primerom;
+			primerom=primerom->next;
+			primerom->prev=NULL;
+			delete(actualm);
+		}
+	}
+}
+
+void elimina_producto(){
+	NodoProductos *anterior, *siguiente;
+	NodoMovimientos *ant, *sig;
+	if (primerop==NULL){
+		printf("Error, la base de datos est%c vac%ca ...\n",160,161);
+		pausa();
+	}
+	else{
+		if (!busca_clave()){
+			printf("Error, clave inexistente en la base de datos ...\n");
+			pausa();
+		}
+		else{
+			if (actualp==primerop) elimina_inicio();
+			else{
+				if (actualp==ultimop) elimina_fin();
+				else{
+					anterior=actualp->prev;
+					siguiente=actualp->next;
+					anterior->next=siguiente;
+					siguiente->prev=anterior;
+					delete(actualp);
+				}
+			}
+			descarga_productos();
+			
+			actualm=primerom;
+			while(actualm!=NULL){
+				if(actualm->clave_m==clave){
+					if(actualm==primerom) registro_inicio();
+					else{
+						if(actualm==ultimom) registro_fin();
+						else{
+							ant=actualm->prev;
+							sig=actualm->next;
+							ant->next=sig;
+							sig->prev=ant;
+							delete(actualm);
+						}
+					}
+				}
+				actualm=actualm->next;
+			}
+			descarga_movimientos();
+		}
+	}
 }
 
 void consulta_fam(){
@@ -206,22 +326,25 @@ void consulta_fam(){
 		printf("Error, familia de productos inexistente en la base de datos");
 		pausa();
 	}else{
+		printf("\nClave         Nombre         U. de medida         Precio         Ex. inicial         Ex. actual         U. requeridas         U. permitidas");
+
 		while(actualp!=NULL){
 			if(strcmp(actualp->fam,fam)==0){
 				for(int i=0;i<strlen(actualp->nom);i++) if(actualp->nom[i]=='_') actualp->nom[i]==' ';
 				for(int i=0;i<strlen(actualp->fam);i++) if(actualp->fam[i]=='_') actualp->fam[i]==' ';
 				for(int i=0;i<strlen(actualp->medida);i++) if(actualp->medida[i]=='_') actualp->medida[i]==' ';
 
-				printf("\n");
-				printf("\nClave: %d",actualp->clave);
-				printf("\nNombre: %s",actualp->nom);
-				printf("\nUnidad de medida: %s",actualp->medida);
-				printf("\nPrecio: %d",actualp->precio);
-				printf("\nExistencia inicial: %d",actualp->ex_i);
-				printf("\nExistencia actual: %d",actualp->ex_a);
-				printf("\nUnidades requeridas: %d",actualp->minP);
-				printf("\nUnidades permitidas: %d",actualp->maxP);
-				printf("\n-----------------------------------------\n");
+				//printf("\n");
+				//printf("\nClave: %d",actualp->clave);
+				//printf("\nNombre: %s",actualp->nom);
+				//printf("\nUnidad de medida: %s",actualp->medida);
+				//printf("\nPrecio: %d",actualp->precio);
+				//printf("\nExistencia inicial: %d",actualp->ex_i);
+				//printf("\nExistencia actual: %d",actualp->ex_a);
+				//printf("\nUnidades requeridas: %d",actualp->minP);
+				//printf("\nUnidades permitidas: %d",actualp->maxP);
+				//printf("\n-----------------------------------------\n");
+				printf("\n%d         %s         %s            %d         %d           %d          %d              %d", actualp->clave, actualp->nom, actualp->medida, actualp->precio, actualp->ex_i, actualp->ex_a, actualp->minP, actualp->maxP);
 
 				actualp=actualp->next;
 			}
@@ -310,7 +433,8 @@ void alta_productos(){
 			ultimop->next=nuevop;
 			ultimop=nuevop;
 		}
-	carga_archivos();
+	//carga_archivos();
+	descarga_productos();
 	}
 }
 
@@ -335,6 +459,7 @@ void consulta_clave(){
 	}
 }
 
+//MENU 2
 void entradas_por_compras(){
 if (!busca_clave()){
 		printf("Error, clave no existe en la base de datos...\n");
@@ -345,7 +470,7 @@ else {
     tipo_mov='E';
     sub_mov='C';
     printf("Seleccione la cantidad que va a comprar: ");scanf("%d", &cantidad);gets(falso);
-    actualp->ex_a=actualp->ex_a+cantidad;
+	actualp->ex_a=actualp->ex_a+cantidad;
     nuevom =new NodoMovimientos;
     nuevom -> cantidad = cantidad;
     nuevom->clave_m=clave;
@@ -364,11 +489,11 @@ else {
         ultimom=nuevom;
     }
     descarga_movimientos();
+    
     descarga_productos();
 
 }
 }
-
 
 void entradas_por_devolci(){
 if (!busca_clave()){
@@ -506,6 +631,225 @@ else {
 }
 }
 
+//MENU 3
+void ordenar_lista(char op){
+	NodoProductos *actual_i, *actual_j, *auxiliar;
+	actual_i=primerop;
+	auxiliar=new NodoProductos;
+	while (actual_i!=NULL){
+		actual_j=actual_i->next;
+		while (actual_j!=NULL){
+			if(op=='a'){
+				if (actual_i->clave>actual_j->clave){
+				auxiliar->clave=actual_i->clave;
+				strcpy(auxiliar->nom,actual_i->nom);
+				strcpy(auxiliar->fam,actual_i->fam);
+				strcpy(auxiliar->medida,actual_i->medida);
+				auxiliar->precio=actual_i->precio;
+				auxiliar->ex_a=actual_i->ex_a;
+				auxiliar->minP=actual_i->minP;
+				auxiliar->maxP=actual_i->maxP;
+				//------------------------------
+				actual_i->clave=actual_j->clave;
+				strcpy(actual_i->nom,actual_j->nom);
+				strcpy(actual_i->fam,actual_j->fam);
+				strcpy(actual_i->medida,actual_j->medida);
+				actual_i->precio=actual_j->precio;
+				actual_i->ex_a=actual_j->ex_a;
+				actual_i->minP=actual_j->minP;
+				actual_i->maxP=actual_j->maxP;
+				//------------------------------
+				actual_j->clave=auxiliar->clave;
+				strcpy(actual_j->nom,auxiliar->nom);
+				strcpy(actual_j->fam,auxiliar->fam);
+				strcpy(actual_j->medida,auxiliar->medida);
+				actual_j->precio=auxiliar->precio;
+				actual_j->ex_a=auxiliar->ex_a;
+				actual_j->minP=auxiliar->minP;
+				actual_j->maxP=auxiliar->maxP;
+				}
+			}
+			if(op=='b'){
+				if (strcmp(actual_i->nom,actual_j->nom)==1){
+				
+				strcpy(auxiliar->nom,actual_i->nom);
+				auxiliar->clave=actual_i->clave;
+				strcpy(auxiliar->fam,actual_i->fam);
+				strcpy(auxiliar->medida,actual_i->medida);
+				auxiliar->precio=actual_i->precio;
+				auxiliar->ex_a=actual_i->ex_a;
+				auxiliar->minP=actual_i->minP;
+				auxiliar->maxP=actual_i->maxP;
+				//------------------------------
+				strcpy(actual_i->nom,actual_j->nom);
+				actual_i->clave=actual_j->clave;
+				strcpy(actual_i->fam,actual_j->fam);
+				strcpy(actual_i->medida,actual_j->medida);
+				actual_i->precio=actual_j->precio;
+				actual_i->ex_a=actual_j->ex_a;
+				actual_i->minP=actual_j->minP;
+				actual_i->maxP=actual_j->maxP;
+				//------------------------------
+				strcpy(actual_j->nom,auxiliar->nom);
+				actual_j->clave=auxiliar->clave;
+				strcpy(actual_j->fam,auxiliar->fam);
+				strcpy(actual_j->medida,auxiliar->medida);
+				actual_j->precio=auxiliar->precio;
+				actual_j->ex_a=auxiliar->ex_a;
+				actual_j->minP=auxiliar->minP;
+				actual_j->maxP=auxiliar->maxP;
+				}
+			}
+			if(op=='d'){
+				if (actual_i->ex_a>actual_j->ex_a){
+				
+				auxiliar->ex_a=actual_i->ex_a;
+				auxiliar->clave=actual_i->clave;
+				strcpy(auxiliar->nom,actual_i->nom);
+				strcpy(auxiliar->fam,actual_i->fam);
+				strcpy(auxiliar->medida,actual_i->medida);
+				auxiliar->precio=actual_i->precio;
+				auxiliar->minP=actual_i->minP;
+				auxiliar->maxP=actual_i->maxP;
+				//------------------------------
+				actual_i->ex_a=actual_j->ex_a;
+				actual_i->clave=actual_j->clave;
+				strcpy(actual_i->nom,actual_j->nom);
+				strcpy(actual_i->fam,actual_j->fam);
+				strcpy(actual_i->medida,actual_j->medida);
+				actual_i->precio=actual_j->precio;
+				actual_i->ex_i=actual_j->ex_i;
+				actual_i->minP=actual_j->minP;
+				actual_i->maxP=actual_j->maxP;
+				//------------------------------
+				actual_j->ex_a=auxiliar->ex_a;
+				actual_j->clave=auxiliar->clave;
+				strcpy(actual_j->nom,auxiliar->nom);
+				strcpy(actual_j->fam,auxiliar->fam);
+				strcpy(actual_j->medida,auxiliar->medida);
+				actual_j->precio=auxiliar->precio;
+				actual_j->ex_i=auxiliar->ex_i;
+				actual_j->minP=auxiliar->minP;
+				actual_j->maxP=auxiliar->maxP;
+				}
+			}
+			if(op=='e'){
+				if (actual_i->ex_a>actual_j->ex_a){
+					
+				auxiliar->ex_a=actual_i->ex_a;
+				auxiliar->clave=actual_i->clave;
+				strcpy(auxiliar->nom,actual_i->nom);
+				strcpy(auxiliar->fam,actual_i->fam);
+				strcpy(auxiliar->medida,actual_i->medida);
+				auxiliar->precio=actual_i->precio;
+				auxiliar->ex_i=actual_i->ex_i;
+				auxiliar->minP=actual_i->minP;
+				auxiliar->maxP=actual_i->maxP;
+				//------------------------------
+				actual_i->ex_a=actual_j->ex_a;
+				actual_i->clave=actual_j->clave;
+				strcpy(actual_i->nom,actual_j->nom);
+				strcpy(actual_i->fam,actual_j->fam);
+				strcpy(actual_i->medida,actual_j->medida);
+				actual_i->precio=actual_j->precio;
+				actual_i->ex_i=actual_j->ex_i;
+				actual_i->minP=actual_j->minP;
+				actual_i->maxP=actual_j->maxP;
+				//------------------------------
+				actual_j->ex_a=auxiliar->ex_a;
+				actual_j->clave=auxiliar->clave;
+				strcpy(actual_j->nom,auxiliar->nom);
+				strcpy(actual_j->fam,auxiliar->fam);
+				strcpy(actual_j->medida,auxiliar->medida);
+				actual_j->precio=auxiliar->precio;
+				actual_j->ex_i=auxiliar->ex_i;
+				actual_j->minP=auxiliar->minP;
+				actual_j->maxP=auxiliar->maxP;
+				}
+			}
+			actual_j=actual_j->next;
+		}
+		actual_i=actual_i->next;
+	}
+}
+
+void lista_reportes(char op){
+	if (primerop==NULL) printf("Error, la lista est%c vac%ca ...\n",160,161);
+	else{
+		if(op=='a'){
+			ordenar_lista(op);
+			actualp=primerop;
+			printf("clave  nombre  familia  U. de medida  Precio  Existencia a.  U. requeridas en el almacen  U. premitidas en el almacen\n");
+			while (actualp!=NULL){
+				printf("%d		%s		%s		%s		%d		%d		%d		%d\n", actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_a, actualp->minP, actualp->maxP);
+				actualp=actualp->next;
+			}
+		}
+		
+		if(op=='b'){
+			ordenar_lista(op);
+			actualp=primerop;
+			printf("nombre  clave  familia  U. de medida  Precio  Existencia a.  U. requeridas en el almacen  U. premitidas en el almacen\n");
+			while (actualp!=NULL){
+				printf("%s		%d		%s		%s		%d		%d		%d		%d\n", actualp->nom, actualp->clave, actualp->fam, actualp->medida, actualp->precio, actualp->ex_a, actualp->minP, actualp->maxP);
+				actualp=actualp->next;
+			}
+		}
+		
+		if(op=='d'){
+			ordenar_lista(op);
+			actualp=primerop;
+			printf("Existencia a.  clave  nombre  familia  U. de medida  Precio  Existencia i.  U. requeridas en el almacen  U. premitidas en el almacen\n");
+			while (actualp!=NULL){
+				if(actualp->ex_a<=actualp->minP){
+					printf("%d		%d		%s		%s		%s		%d		%d		%d		%d\n", actualp->ex_a, actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_i, actualp->minP, actualp->maxP);
+				}
+				actualp=actualp->next;
+			}
+		}
+		
+		if(op=='e'){
+			ordenar_lista(op);
+			actualp=primerop;
+			printf("Existencia a.   clave   nombre   familia   U. de medida   Precio   Existencia i.   U. requeridas en el almacen   U. premitidas en el almacen\n");
+			while (actualp!=NULL){
+				if(actualp->ex_a>=actualp->maxP){
+					printf("%d		%d	%s		%s		%s		%d		%d			%d			%d\n", actualp->ex_a, actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_i, actualp->minP, actualp->maxP);
+				}
+				actualp=actualp->next;
+			}
+		}
+		
+		if(op=='f'){
+			if(!busca_clave()){
+				printf("Error, clave inexistente en la base de datos...\n");
+				
+			}
+			else{
+				for(int i=0;i<strlen(actualp->nom);i++) if(actualp->nom[i]=='_') actualp->nom[i]==' ';
+				for(int i=0;i<strlen(actualp->fam);i++) if(actualp->fam[i]=='_') actualp->fam[i]==' ';
+				for(int i=0;i<strlen(actualp->medida);i++) if(actualp->medida[i]=='_') actualp->medida[i]==' ';
+	
+				printf("\nClave: %d", actualp->clave);
+				printf("\nNombre: %s",actualp->nom);
+				printf("\nFamilia del producto: %s",actualp->fam);
+				
+				actualm=primerom;
+				printf("\nFecha		Cantidad		Entrada/Salida		Sub Tipo\n");
+				while(actualm!=NULL){
+					if(actualm->clave_m==clave){
+						printf("\n%s		%d		%c		%c", actualm->fecha, actualm->cantidad, actualm->tipo_mov, actualm->sub_mov);
+					}
+					actualm=actualm->next;
+				}
+			}	
+		}
+	}
+	pausa();
+}
+
+
+//MENUS
 int menu_archivo(){
 	char op ;
 
@@ -525,7 +869,7 @@ int menu_archivo(){
 		    alta_productos();
 		    break;
         case 'b' :
-   		    cout<<"b\n";
+   		    elimina_producto();
            break;
         case 'c' :
    		    consulta_clave();
@@ -594,22 +938,22 @@ int menu_reportesl(){
 
         switch (op){
 		case 'a' :
-		    cout<<"A\n";
+		    lista_reportes(op);
 		    break;
         case 'b' :
-   		    cout<<"b\n";
+   		    lista_reportes(op);
            break;
         case 'c' :
-   		    cout<<"c\n";
+   		    consulta_fam();
            break;
         case 'd' :
-   		    cout<<"d\n";
+   		    lista_reportes(op);
            break;
         case 'e' :
-   		    cout<<"e\n";
+   		    lista_reportes(op);
            break;
         case 'f' :
-   		    cout<<"f\n";
+        	lista_reportes(op);
            break;
         case 'x':
             return 0;
