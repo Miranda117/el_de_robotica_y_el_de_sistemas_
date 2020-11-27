@@ -174,7 +174,6 @@ void descarga_movimientos(){
 bool busca_clave(){
 	printf("Indica la clave del producto: "); scanf("%d",&clave); gets(falso);
 	bool existe_clave=false;
-
 	actualp=primerop;
 	while(actualp!=NULL){
 		if(actualp->clave==clave){
@@ -184,6 +183,8 @@ bool busca_clave(){
 	}
 	return(false);
 }
+
+
 
 //MENU 1
 void elimina_fin(){
@@ -326,7 +327,7 @@ void consulta_fam(){
 		printf("Error, familia de productos inexistente en la base de datos");
 		pausa();
 	}else{
-		printf("\nClave         Nombre         U. de medida         Precio         Ex. inicial         Ex. actual         U. requeridas         U. permitidas");
+		printf("\nClave	 Nombre   U. de medida	Precio	Ex. inicial	Ex. actual	Stock MIN	Stock MAX");
 
 		while(actualp!=NULL){
 			if(strcmp(actualp->fam,fam)==0){
@@ -344,22 +345,22 @@ void consulta_fam(){
 				//printf("\nUnidades requeridas: %d",actualp->minP);
 				//printf("\nUnidades permitidas: %d",actualp->maxP);
 				//printf("\n-----------------------------------------\n");
-				printf("\n%d         %s         %s            %d         %d           %d          %d              %d", actualp->clave, actualp->nom, actualp->medida, actualp->precio, actualp->ex_i, actualp->ex_a, actualp->minP, actualp->maxP);
-
-				actualp=actualp->next;
+				printf("\n%d %10s %14s %7d %12d %14d %18d %15d\n", actualp->clave, actualp->nom, actualp->medida, actualp->precio, actualp->ex_i, actualp->ex_a, actualp->minP, actualp->maxP);
 			}
+			actualp=actualp->next;
 		}
 	}
 }
 
 void alta_productos(){
 	int l;
-	if (busca_clave()){
-		printf("Error, clave se duplica en la base de datos...\n");
+	bool c = busca_clave();
+	if ((c==true)||(clave<1)||(clave>99999)){
+		printf("Error, la clave no se puede registrar, revise que sea formato numerico y que no se duplique\n");
 		pausa();
 	}else{
 		do{
-			printf("\nIndica el nombre del produco: "); gets(nom);
+			printf("\nIndica el nombre del producto: "); gets(nom);
 			l=strlen(nom);
 			if((l<1) || (l>20)){
 				printf("Error, cadena entre 1 y 20 caracteres...\n");
@@ -390,7 +391,7 @@ void alta_productos(){
 			}
 		}while((precio<1) || (precio>999999));
 		do{
-			printf("\nIndica la existencia inicial del producto: "); scanf("%d",&ex_i); gets(falso);
+			printf("\nIndica la existencia inicial del producto: "); scanf("%d", &ex_i); gets(falso);
 			if((ex_i<1) || (ex_i>999999)){
 				printf("Error, la existencia sobrepasa el limite...\n");
 				pausa();
@@ -448,14 +449,14 @@ void consulta_clave(){
 		for(int i=0;i<strlen(actualp->fam);i++) if(actualp->fam[i]=='_') actualp->fam[i]==' ';
 		for(int i=0;i<strlen(actualp->medida);i++) if(actualp->medida[i]=='_') actualp->medida[i]==' ';
 
-		printf("\nNombre: %s",actualp->nom);
-		printf("\nFamilia del producto: %s",actualp->fam);
-		printf("\nUnidad de medida: %s",actualp->medida);
-		printf("\nPrecio: %d",actualp->precio);
-		printf("\nExistencia inicial: %d",actualp->ex_i);
-		printf("\nExistencia actual: %d",actualp->ex_a);
-		printf("\nUnidades requeridas: %d",actualp->minP);
-		printf("\nUnidades permitidas: %d",actualp->maxP);
+		printf("\nNombre:			%s",actualp->nom);
+		printf("\nFamilia del producto:	%s",actualp->fam);
+		printf("\nUnidad de medida:	%s",actualp->medida);
+		printf("\nPrecio:			%d",actualp->precio);
+		printf("\nExistencia inicial:	%d",actualp->ex_i);
+		printf("\nExistencia actual:	%d",actualp->ex_a);
+		printf("\nStock MIN:		%d",actualp->minP);
+		printf("\nStock MAX:		%d",actualp->maxP);
 	}
 }
 
@@ -469,7 +470,7 @@ else {
     strcpy(fecha,obtiene_fecha());
     tipo_mov='E';
     sub_mov='C';
-    printf("Seleccione la cantidad que va a comprar: ");scanf("%d", &cantidad);gets(falso);
+    printf("Indique la cantidad que va a comprar: ");scanf("%d", &cantidad);gets(falso);
 	actualp->ex_a=actualp->ex_a+cantidad;
     nuevom =new NodoMovimientos;
     nuevom -> cantidad = cantidad;
@@ -504,7 +505,7 @@ else {
     strcpy(fecha,obtiene_fecha());
     tipo_mov='E';
     sub_mov='D';
-    printf("Seleccione la cantidad que fue devulta comprador: ");scanf("%d", &cantidad);gets(falso);
+    printf("Seleccione la cantidad que fue devuelta al comprador: ");scanf("%d", &cantidad);gets(falso);
     actualp->ex_a=actualp->ex_a+cantidad;
     nuevom =new NodoMovimientos;
     nuevom->clave_m=clave;
@@ -538,7 +539,7 @@ else {
     strcpy(fecha,obtiene_fecha());
     tipo_mov='S';
     sub_mov='V';
-    printf("Seleccione la cantidad que fue comprada por el cliente: ");scanf("%d", &cantidad);gets(falso);
+    printf("Indique la cantidad que fue comprada por el cliente: ");scanf("%d", &cantidad);gets(falso);
     actualp->ex_a=actualp->ex_a-cantidad;
     nuevom = new NodoMovimientos;
     nuevom->clave_m=clave;
@@ -572,7 +573,7 @@ else {
     strcpy(fecha,obtiene_fecha());
     tipo_mov='S';
     sub_mov='P';
-    printf("Seleccione la cantidad que fue devuenta al proveedor: ");scanf("%d", &cantidad);gets(falso);
+    printf("Seleccione la cantidad que fue devuelta al proveedor: ");scanf("%d", &cantidad);gets(falso);
     actualp->ex_a=actualp->ex_a-cantidad;
     nuevom = new NodoMovimientos;
     nuevom->clave_m=clave;
@@ -709,6 +710,7 @@ void ordenar_lista(char op){
 				strcpy(auxiliar->fam,actual_i->fam);
 				strcpy(auxiliar->medida,actual_i->medida);
 				auxiliar->precio=actual_i->precio;
+				auxiliar->ex_i=actual_i->ex_i;
 				auxiliar->minP=actual_i->minP;
 				auxiliar->maxP=actual_i->maxP;
 				//------------------------------
@@ -779,9 +781,9 @@ void lista_reportes(char op){
 		if(op=='a'){
 			ordenar_lista(op);
 			actualp=primerop;
-			printf("clave  nombre  familia  U. de medida  Precio  Existencia a.  U. requeridas en el almacen  U. premitidas en el almacen\n");
+			printf("clave       nombre         familia   U. de medida    Precio	Existencia a. Stock MIN Stock MAX\n");
 			while (actualp!=NULL){
-				printf("%d		%s		%s		%s		%d		%d		%d		%d\n", actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_a, actualp->minP, actualp->maxP);
+				printf("%d	%10s %15s %9s %12d %18d %10d %9d\n", actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_a, actualp->minP, actualp->maxP);
 				actualp=actualp->next;
 			}
 		}
@@ -789,9 +791,9 @@ void lista_reportes(char op){
 		if(op=='b'){
 			ordenar_lista(op);
 			actualp=primerop;
-			printf("nombre  clave  familia  U. de medida  Precio  Existencia a.  U. requeridas en el almacen  U. premitidas en el almacen\n");
+			printf("    nombre clave	 familia   U. de medida    Precio  Existencia a.   Stock MIN   Stock MAX\n");
 			while (actualp!=NULL){
-				printf("%s		%d		%s		%s		%d		%d		%d		%d\n", actualp->nom, actualp->clave, actualp->fam, actualp->medida, actualp->precio, actualp->ex_a, actualp->minP, actualp->maxP);
+				printf("%10s %5d %15s %9s %12d	%16d %11d %11d\n", actualp->nom, actualp->clave, actualp->fam, actualp->medida, actualp->precio, actualp->ex_a, actualp->minP, actualp->maxP);
 				actualp=actualp->next;
 			}
 		}
@@ -799,10 +801,10 @@ void lista_reportes(char op){
 		if(op=='d'){
 			ordenar_lista(op);
 			actualp=primerop;
-			printf("Existencia a.  clave  nombre  familia  U. de medida  Precio  Existencia i.  U. requeridas en el almacen  U. premitidas en el almacen\n");
+			printf("Existencia a.  clave     nombre      familia     U. de medida   Precio   Existencia i.   Stock MIN  Stock MAX\n");
 			while (actualp!=NULL){
 				if(actualp->ex_a<=actualp->minP){
-					printf("%d		%d		%s		%s		%s		%d		%d		%d		%d\n", actualp->ex_a, actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_i, actualp->minP, actualp->maxP);
+					printf("%13d %6d %10s %12s %11s %13d %15d %11d %10d\n", actualp->ex_a, actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_i, actualp->minP, actualp->maxP);
 				}
 				actualp=actualp->next;
 			}
@@ -811,10 +813,10 @@ void lista_reportes(char op){
 		if(op=='e'){
 			ordenar_lista(op);
 			actualp=primerop;
-			printf("Existencia a.   clave   nombre   familia   U. de medida   Precio   Existencia i.   U. requeridas en el almacen   U. premitidas en el almacen\n");
+			printf("Existencia a.  clave     nombre      familia     U. de medida   Precio   Existencia i.   Stock MIN  Stock MAX\n");
 			while (actualp!=NULL){
 				if(actualp->ex_a>=actualp->maxP){
-					printf("%d		%d	%s		%s		%s		%d		%d			%d			%d\n", actualp->ex_a, actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_i, actualp->minP, actualp->maxP);
+					printf("%13d %6d %10s %12s %11s %13d %15d %11d %10d\n", actualp->ex_a, actualp->clave, actualp->nom, actualp->fam, actualp->medida, actualp->precio, actualp->ex_i, actualp->minP, actualp->maxP);
 				}
 				actualp=actualp->next;
 			}
@@ -833,12 +835,12 @@ void lista_reportes(char op){
 				printf("\nClave: %d", actualp->clave);
 				printf("\nNombre: %s",actualp->nom);
 				printf("\nFamilia del producto: %s",actualp->fam);
-				
+				printf("\n-----------------------------------------------------------");
 				actualm=primerom;
-				printf("\nFecha		Cantidad		Entrada/Salida		Sub Tipo\n");
+				printf("\nFecha		Cantidad	Entrada/Salida	Sub Tipo\n");
 				while(actualm!=NULL){
 					if(actualm->clave_m==clave){
-						printf("\n%s		%d		%c		%c", actualm->fecha, actualm->cantidad, actualm->tipo_mov, actualm->sub_mov);
+						printf("\n%s	%d		%c		%c", actualm->fecha, actualm->cantidad, actualm->tipo_mov, actualm->sub_mov);
 					}
 					actualm=actualm->next;
 				}
